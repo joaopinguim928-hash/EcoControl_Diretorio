@@ -40,3 +40,12 @@ export type CompanyProfile = {
   emReduction: number;
   breakdown: ScoreBreakdownItem[];
   chart: {
+    co2: ChartRow[];
+    agua: ChartRow[];
+    energia: ChartRow[];
+    residuos: ChartRow[];
+    emissoes: ChartRow[];
+  };
+  units: UnitScore[];
+  targets: PublicTarget[];
+};
