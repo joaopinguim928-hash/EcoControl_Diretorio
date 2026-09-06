@@ -4,7 +4,8 @@ import {
 } from 'recharts';
 import {
   ArrowLeft, Award, Building2, Target, TrendingDown, Loader2, ShieldAlert,
-  Droplets, Zap, Recycle, Factory, CheckCircle2, AlertCircle,
+  Droplets, Zap, Recycle, Factory, CheckCircle2, AlertCircle, FileText,
+  MessageSquare, Send, HelpCircle, Check,
 } from 'lucide-react';
 import { CompanyProfile } from '../types';
 import { api } from '../../utils/api';
@@ -26,6 +27,13 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Ask a question
+  const [questionText, setQuestionText] = useState('');
+  const [askerName, setAskerName] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState(false);
+
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -38,6 +46,22 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
     });
     return () => { active = false; };
   }, [username]);
+
+  const submitQuestion = async () => {
+    if (!questionText.trim()) return;
+    setIsSending(true);
+    setSendError(false);
+    const ok = await api.askQuestion(username, questionText.trim(), askerName.trim());
+    setIsSending(false);
+    if (ok) {
+      setSent(true);
+      setQuestionText('');
+      setAskerName('');
+      setTimeout(() => setSent(false), 4000);
+    } else {
+      setSendError(true);
+    }
+  };
 
   const BackButton = () => (
     <button
@@ -83,9 +107,11 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
         <BackButton />
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-            <Building2 className="w-7 h-7 text-green-600" />
+        <div className="flex items-center gap-4 mb-4">
+          <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 w-16 h-16 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {profile.logoUrl
+              ? <img src={profile.logoUrl} alt={profile.companyName} className="w-full h-full object-cover rounded-xl" />
+              : <Building2 className="w-7 h-7 text-green-600" />}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{profile.companyName}</h1>
@@ -94,6 +120,13 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
             </p>
           </div>
         </div>
+
+        {/* Description */}
+        {profile.description && (
+          <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100">
+            <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{profile.description}</p>
+          </div>
+        )}
 
         {!hasScore && (
           <div className="bg-white rounded-2xl p-8 text-center border border-gray-200 shadow-sm mb-6">
@@ -261,7 +294,7 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
         )}
 
         {/* Public sustainability targets */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-purple-600" />
             <h3 className="text-lg font-bold text-gray-900">Metas de Sostenibilidad</h3>
@@ -319,6 +352,96 @@ export function CompanyProfilePage({ username, onBack }: CompanyProfilePageProps
               );
             })}
           </div>
+        </div>
+
+        {/* Posts feed */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-bold text-gray-900">Publicaciones</h3>
+          </div>
+          {profile.posts.length === 0 ? (
+            <p className="text-gray-400 text-sm">Esta empresa aún no publicó novedades.</p>
+          ) : (
+            <div className="space-y-3">
+              {profile.posts.map(post => (
+                <div key={post.id} className="border border-gray-200 rounded-xl p-4">
+                  <p className="text-gray-800 text-sm whitespace-pre-wrap">{post.text}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(post.createdAt).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Q&A */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5 text-emerald-600" />
+            <h3 className="text-lg font-bold text-gray-900">Preguntas y Respuestas</h3>
+          </div>
+
+          {/* Ask form */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+            <input
+              type="text"
+              value={askerName}
+              onChange={e => setAskerName(e.target.value)}
+              placeholder="Tu nombre (opcional)"
+              maxLength={60}
+              className="w-full px-3.5 py-2.5 mb-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none bg-white"
+            />
+            <textarea
+              value={questionText}
+              onChange={e => setQuestionText(e.target.value)}
+              placeholder="Escribe tu pregunta para esta empresa…"
+              rows={2}
+              maxLength={400}
+              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent outline-none resize-none bg-white"
+            />
+            <div className="flex items-center justify-between mt-2">
+              {sent ? (
+                <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                  <Check className="w-4 h-4" /> Pregunta enviada
+                </span>
+              ) : sendError ? (
+                <span className="text-sm text-red-500">No se pudo enviar. Intenta de nuevo.</span>
+              ) : (
+                <span className="text-xs text-gray-400">{questionText.length}/400</span>
+              )}
+              <button
+                onClick={submitQuestion}
+                disabled={isSending || !questionText.trim()}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Preguntar
+              </button>
+            </div>
+          </div>
+
+          {/* Answered questions */}
+          {profile.questions.filter(q => q.answer).length === 0 ? (
+            <div className="text-center py-6">
+              <HelpCircle className="w-7 h-7 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Todavía no hay preguntas respondidas.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {profile.questions.filter(q => q.answer).map(q => (
+                <div key={q.id} className="border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{q.askerName}</p>
+                  <p className="text-gray-900 font-medium text-sm mb-3">{q.question}</p>
+                  <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+                    <p className="text-xs font-semibold text-emerald-700 mb-1">Respuesta de {profile.companyName}</p>
+                    <p className="text-sm text-emerald-900 whitespace-pre-wrap">{q.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
