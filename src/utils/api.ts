@@ -23,4 +23,17 @@ export const api = {
 
   getCompanyProfile: (username: string) =>
     get<CompanyProfile>(`/public/companies/${encodeURIComponent(username)}`),
+
+  askQuestion: async (username: string, question: string, askerName: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${BASE}/public/companies/${encodeURIComponent(username)}/questions`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ question, askerName }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
 };
