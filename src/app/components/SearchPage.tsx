@@ -110,9 +110,11 @@ export function SearchPage({ onSelectCompany }: SearchPageProps) {
                 onClick={() => onSelectCompany(company.username)}
                 className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-between border border-gray-100 hover:border-green-200 group"
               >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="bg-green-100 p-3 rounded-xl flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-green-600" />
+                                <div className="flex items-center gap-4 min-w-0">
+                  <div className="bg-green-100 rounded-xl flex-shrink-0 w-11 h-11 flex items-center justify-center overflow-hidden">
+                    {company.logoUrl
+                      ? <img src={company.logoUrl} alt={company.companyName} className="w-full h-full object-cover" />
+                      : <Building2 className="w-5 h-5 text-green-600" />}
                   </div>
                   <div className="text-left min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{company.companyName}</p>
